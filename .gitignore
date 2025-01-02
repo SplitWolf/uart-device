@@ -1,0 +1,5 @@
+build
+include
+output
+config/xsim_cfg.tcl
+**/__pycache__/

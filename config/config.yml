@@ -1,0 +1,33 @@
+project:
+  name: uart_device
+  top_level: uart_transmitter  # defualt: and_gate
+  build_dir: build
+  sim_tool: xsim
+  synth_tool: vivado
+  source_type: vhdlSource-2008
+
+pre_built_compontents:
+  location: './src/pre_built_components'
+  source_type: vhdlSource-2008
+
+device_settings_intel: # Quartus
+  family: 'Cyclone IV E'
+  device: 'EP4CE115F29C7'
+  cable: 'USB-Blaster[USB-0]'
+  board_device_index: '1'
+
+# device_settings: Vivado
+#   part: 'xc7z007sclg400-1'
+#   board_part: ''
+#   synth: vivado
+#   pgm: '' # none/vivado -- Programming tool
+#   jtag_freq: 0
+#   hw_target: ''
+#   board_device_index: 1
+
+tool_options:
+# Custom extra tool options
+
+tool_locations:
+  vivado: "C:\\Xilinx\\Vivado\\2024.1\\bin" # Folder than contains bin
+  quartus: "C:\\intelFPGA\\23.1std\\quartus\\bin64" # Folder than contains bin64
