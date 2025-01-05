@@ -28,8 +28,18 @@ architecture rtl of uart_device is
     signal address0, address1, address2, address3: std_logic;
     signal loadSCCR: std_logic;
 begin
-
-    -- TODO: Receiver
+    -- Receiver
+    receive: entity work.uart_receiver
+     port map(
+        i_rxd => i_rxd,
+        i_baudClkx8 => '0',
+        i_readRDR => int_readRDR,
+        i_resetn => i_resetn,
+        o_oe => int_out_oe,
+        o_fe => int_out_fe,
+        o_rdrf => int_out_rdrf,
+        o_rdr => int_out_rdr
+    );
     
     -- Transmitter
 
