@@ -19,15 +19,26 @@ port (
 end uart_device;
 
 architecture rtl of uart_device is
+    -- Constant Signals;
+    signal const_vcc, const_gnd: std_logic; 
     -- Data Signals
-    signal int_SCSR, int_loadTDR, int_loadTDR_flop: std_logic_vector(7 downto 0);
+    signal int_readRDR: std_logic;
+    signal int_SCSR: std_logic_vector(7 downto 0);
+    signal int_loadTDR, int_loadTDR_flop: std_logic;
     signal int_out_tdre, int_out_txd: std_logic;
     signal int_out_rdrf, int_out_oe, int_out_fe: std_logic;
-    signal out_sccr, out_rdr: std_logic_vector(7 downto 0);
+    signal int_out_sccr, int_out_rdr: std_logic_vector(7 downto 0);
     -- Control Signals
     signal address0, address1, address2, address3: std_logic;
     signal loadSCCR: std_logic;
 begin
+    const_vcc <= '1';
+    const_gnd <= '0';
+    -- Ouput Drivers
+    o_txd <= int_out_txd;
+    o_irq <= '0'; --TODO: GENERATE IRQ
+    -- TODO: Baud Rate Generator
+
     -- Receiver
     receive: entity work.uart_receiver
      port map(
@@ -43,7 +54,7 @@ begin
     
     -- Transmitter
 
-    int_loadTDR <= (address0 and not i_writen_read);
+    int_loadTDR <= (address0 and (not i_writen_read));
 
     loadTDR_ff: entity basic_rtl.synth_enardFF
     port map(
@@ -63,7 +74,7 @@ begin
             i_baudClk => '0', --TODO: SET BAUD CLK
             i_resetn => i_resetn,
             o_tdre => int_out_tdre,
-            o_txd => int_out_txd;
+            o_txd => int_out_txd
         );
 
     -- Bus Singals
@@ -78,10 +89,10 @@ begin
     int_SCSR <= int_out_tdre & int_out_rdrf & "0000" & int_out_oe & int_out_fe;
     loadSCCR <= (address2 or address3) and not i_writen_read;
 
-    io_data_bus <= "ZZZZZZZZ";
-    io_data_bus <= out_rdr when (address0 and i_writen_read and i_uartSelect) = '1' else "ZZZZZZZZ";
-    io_data_bus <= int_SCSR when (address1 and i_writen_read and i_uartSelect) = '1' else "ZZZZZZZZ";
-    io_data_bus <= out_sccr when ((address2 or address3) and i_writen_read and i_uartSelect) = '1' else "ZZZZZZZZ";
+    io_data_bus <= (others => 'Z');
+    io_data_bus <= int_out_rdr when (address0 and i_writen_read and i_uartSelect) = '1' else (others => 'Z');
+    io_data_bus <= int_SCSR when (address1 and i_writen_read and i_uartSelect) = '1' else (others => 'Z');
+    io_data_bus <= int_out_sccr when ((address2 or address3) and i_writen_read and i_uartSelect) = '1' else (others => 'Z');
 
     -- Storage Components
     SCCR: entity basic_rtl.registerNbits
@@ -92,9 +103,9 @@ begin
     i_in => io_data_bus,
     i_load => loadSCCR,
     i_clk => i_clk,
-    i_cen => '1',
+    i_cen => const_vcc,
     i_resetn => i_resetn,
-    o_out => out_sccr
+    o_out => int_out_sccr
     );
     
 
