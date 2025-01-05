@@ -20,8 +20,8 @@ architecture rtl of uart_transmitter is
     
     -- Data signals
     signal out_TDR: std_logic_vector(7 downto 0); 
-    signal int_in_state0, int_in_state1, int_in_state2, int_in_state3, int_in_state4: std_logic;
-    signal int_out_state0, int_out_state1, int_out_state2, int_out_state3, int_out_state4: std_logic;
+    signal int_in_state0, int_in_state1, int_in_state2, int_in_state3: std_logic;
+    signal int_out_state0, int_out_state1, int_out_state2, int_out_state3: std_logic;
     signal int_in_txdBUF, int_out_txdBUF: std_logic;
     signal int_in_tdrf, int_out_tdrf: std_logic;
     signal loadTDR_sync, int_out_tsr: std_logic;
@@ -62,8 +62,7 @@ begin
         i_clkIn => i_clk,
         i_clkOut => i_baudClk,
         i_resetn => i_resetn,
-        o_risingPulse => loadTDR_sync,
-        o_fallingPulse => open
+        o_pulse => loadTDR_sync
     );
 
     -- Bit counter

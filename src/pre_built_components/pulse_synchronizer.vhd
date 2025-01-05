@@ -10,8 +10,7 @@ entity pulse_synchronizer is
         i_clkIn: in std_Logic;
         i_clkOut: in std_logic;
         i_resetn: in std_logic;
-        o_risingPulse: out std_logic;
-        o_fallingPulse: out std_logic
+        o_pulse: out std_logic
     );
 end pulse_synchronizer;
 
@@ -26,7 +25,7 @@ architecture rtl of pulse_synchronizer is
             o_q, o_qBar: out std_logic
         );
     end component;
-    signal int_sel, int_reset: std_logic; 
+    signal int_sel, int_reset, int_reset_start: std_logic; 
     signal int_d0_out, int_d0n_out: std_logic;
     signal int_d1_out, int_d1n_out: std_logic;
     signal int_d2_out, int_d2n_out: std_logic;
@@ -37,8 +36,8 @@ begin
     const_vcc <= '1';
     const_gnd <= '0';
 
-    int_sel <=i_raw or int_reset;
-
+    int_sel <=i_raw;
+    
     inputMux: entity basic_rtl.busMux2x1
      generic map(
         DataWidth => 1
@@ -87,9 +86,6 @@ begin
        o_qn => int_d3n_out
     );
 
-    int_reset <= int_d2n_out and int_d3_out;
-
-   o_risingPulse <= int_d2_out and int_d3n_out;
-   o_fallingPulse <=int_d2n_out and int_d3_out;
+   o_pulse <= (int_d2_out and int_d3n_out) or (int_d2n_out and int_d3_out);
 
 end rtl ; -- rtl
