@@ -11,17 +11,14 @@ end uart_transmitter_tb;
 
 architecture sim of uart_transmitter_tb is
 
-    signal clock, reset, notReset, TDRE, bclock, data_out, loadTransmit: std_logic;
+    signal clock, reset, TDRE, bclock, data_out, loadTransmit: std_logic;
     signal data : std_logic_vector(7 downto 0);
-    signal rateSel: std_logic_vector(2 downto 0);
     signal sim_end : boolean := false;
-    constant period: time := 39.7220 ns; 
-    constant bperiod: time := period*41;
-    -- constant period: time := 5s0 ns; 
+    constant period: time := 40 ns;
+    -- constant period: time := 39.7220 ns; 
+    constant bperiod: time := period*41*8;
 
 begin
-    notReset <= not reset;
-
 clk: process
 begin
     while (not sim_end) loop
@@ -32,8 +29,6 @@ begin
     end loop;
     wait;
 end process clk;
-
-
 
 baudRateGen: process
 begin
@@ -62,11 +57,12 @@ DUT: entity work.uart_transmitter
 tb: process
 begin
 data <= x"55";
-rateSel <= "000";
+loadTransmit <= '0';
 reset <= '0', '1' after period;
 wait for period - 2ns;
 loadTransmit <= '1', '0' after period;
-wait for bperiod*25;
+wait for bperiod*3;
+-- wait for bperiod*25*8;
 data <= x"AA";
 loadTransmit <= '1', '0' after period;
 wait for bperiod*25;
