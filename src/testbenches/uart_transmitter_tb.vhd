@@ -59,7 +59,7 @@ begin
 data <= x"55";
 loadTransmit <= '0';
 reset <= '0', '1' after period;
-wait for period - 2ns;
+wait for period - 2 ns;
 loadTransmit <= '1', '0' after period;
 wait for bperiod*3;
 -- wait for bperiod*25*8;

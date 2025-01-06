@@ -66,37 +66,37 @@ begin
     -- Send x"55"
     address <= 2X"0";
     writen_read <= '0';
-    data <= x"55" after 2ns;
+    data <= x"55" after 2 ns;
     uSelect <= '1';
     wait for period;
     uSelect <= '0';
     wait for period;
     data <= (others => 'Z');
-    wait for 400us;
+    wait for 400 us;
     -- Read the Receive Register (data loopback test)
     address <= 2X"0";
     writen_read <= '1';
     data <= (others => 'Z');
-    uSelect <= '1','0' after 10us;
-    wait for 15us;
+    uSelect <= '1','0' after 10 us;
+    wait for 15 us;
     -- Attempt to write the Status Register (should fail to write)
     address <= 2X"1";
     writen_read <= '0';
     data <= x"FF";
-    uSelect <= '1','0' after 10us;
-    wait for 15us;
+    uSelect <= '1','0' after 10 us;
+    wait for 15 us;
     -- Read the Status Register
     address <= 2X"1";
     writen_read <= '1';
     data <= (others => 'Z');
-    uSelect <= '1','0' after 10us;
-    wait for 15us;
+    uSelect <= '1','0' after 10 us;
+    wait for 15 us;
     -- Read the Control Register
     address <= 2X"2";
     writen_read <= '1';
     data <= (others => 'Z');
-    uSelect <= '1','0' after 10us;
-    wait for 15us;
+    uSelect <= '1','0' after 10 us;
+    wait for 15 us;
 
 
     report "Test: OK";
