@@ -7,7 +7,7 @@ use basic_rtl.all;
 entity uart_receiver is
     port (
       i_rxd: in std_logic;
-    --   i_clk: in std_logic;
+      i_clk: in std_logic;
       i_baudClkx8: in std_logic;
       i_readRDR: in std_logic;
       i_resetn: in std_logic;
@@ -27,11 +27,11 @@ architecture rtl of uart_receiver is
     signal int_in_state0, int_in_state1, int_in_state2, int_in_state3, int_in_state4, int_in_state5, int_in_state6: std_logic;
     signal int_out_state0, int_out_state1, int_out_state2, int_out_state3, int_out_state4, int_out_state5, int_out_state6: std_logic;
     signal int_out_RDR, int_RSR_out: std_logic_vector(7 downto 0); 
-    signal int_loadRDR, int_cenRSR: std_logic;
-    signal int_in_rdrf, int_out_rdrf: std_logic;
+    signal int_loadRDR, int_readRDR_sync, int_cenRSR: std_logic;
+    signal int_rdrfLd, int_in_rdrf, int_out_rdrf: std_logic;
     signal int_stopLd, int_out_stop: std_logic;
-    signal int_feLd, int_in_fe, int_out_fe, int_sel_fe: std_logic;
-    signal int_oeLd,int_in_oe, int_out_oe, int_sel_oe: std_logic;
+    signal int_feLd, int_in_fe, int_out_fe: std_logic;
+    signal int_oeLd,int_in_oe, int_out_oe: std_logic;
 
     -- Counter Singals
     signal int_count4clocksZ, int_count8clocksZ, int_count8BitsZ: std_logic;
@@ -49,43 +49,58 @@ begin
     o_rdrf <= int_out_rdrf;
 
     -- Control logic
+    int_in_fe <= (int_out_state5 and not int_out_stop);
+    int_in_oe <= (int_out_state4 and not int_readRDR_sync and int_out_rdrf);
+    int_in_rdrf <= int_out_state5;
 
-    -- TODO: Update this logic/Use cen
-    -- TODO: Change how framing error is dealt with
-    -- TODO: Test ReadRDR more
-    int_in_fe <= (int_out_state5 and not int_out_stop) or (int_out_fe and not i_rxd);
-    int_in_oe <= (int_out_state4 and int_out_rdrf) or int_out_oe;
-    int_in_rdrf <=int_out_state5 or (int_out_rdrf and not i_readRDR);
+    int_feLd <= (int_out_state0 and not int_out_oe and i_rxd and not int_out_rdrf) 
+        or (int_out_state5 and not int_out_stop);
+    int_oeLd <= (int_out_state0 and int_out_oe and int_readRDR_sync)
+        or (int_out_state4 and not int_readRDR_sync and int_out_rdrf);
+    int_rdrfLd <= (int_out_state0 and int_readRDR_sync) 
+        or (int_out_state1 and int_readRDR_sync)
+        or (int_out_state2 and int_readRDR_sync)
+        or (int_out_state3 and int_readRDR_sync)
+        or (int_out_state4 and int_readRDR_sync)
+        or int_out_state5;
 
     int_cenRSR <= int_out_state3;
     int_stopLd <= int_out_state4;
 
     int_loadRDR <= int_out_state5;
 
-        -- Counters
+    -- Counters
     int_count4clocksLd <= int_out_state0;
     int_count8clocksLd <= int_out_state0 or int_out_state3;
     int_count8BitsLd <= int_out_state0;
 
     int_count4clocksEn <= int_count4clocksLd or int_out_state1;
-    -- int_count8clocksEn <= int_count8clocksLd or int_out_state2 or int_out_state6;
     int_count8clocksEn <= int_count8clocksLd or int_out_state2;
     int_count8BitsEn <= int_count8BitsLd or int_out_state3;
 
     -- Next state logic
-    int_in_state0 <= (int_out_state0 and i_rxd)
-        or (int_out_state0 and not i_rxd and int_out_oe) 
-        or (int_out_state0 and not i_rxd and not int_out_oe and int_out_fe)
-        or (int_out_state5) 
-        or (int_out_state4 and int_out_rdrf);
+    int_in_state0 <= (int_out_state0 and int_out_oe and not int_readRDR_sync)
+        or (int_out_state0 and not int_out_oe and i_rxd)
+        or (int_out_state0 and not int_out_oe and not i_rxd and int_out_fe)
+        or (int_out_state5)
+        or (int_out_state4 and not int_readRDR_sync and int_out_rdrf);
     int_in_state1 <= (int_out_state0 and not i_rxd and not int_out_oe and not int_out_fe) or (int_out_state1 and not int_count4clocksZ);
-    -- int_in_state2 <= (int_out_state1 and int_count4clocksZ) or (int_out_state2 and not int_count8clocksZ) or (int_out_state3 and not int_count8BitsZ);
     int_in_state2 <= (int_out_state1 and int_count4clocksZ) or (int_out_state2 and not int_count8clocksZ) or (int_out_state3);
     int_in_state3 <= (int_out_state2 and int_count8clocksZ and not int_count8BitsZ);
-    -- int_in_state6 <= (int_out_state6 and not int_count8clocksZ) or (int_out_state3 and int_count8BitsZ);
-    -- int_in_state4 <= int_out_state6 and int_count8clocksZ;
     int_in_state4 <=int_out_state2 and int_count8clocksZ and int_count8BitsZ;
-    int_in_state5 <= int_out_state4 and not int_out_rdrf;
+    int_in_state5 <= (int_out_state4 and int_readRDR_sync) 
+        or (int_out_state4 and not int_readRDR_sync and not int_out_rdrf) 
+        or (int_out_state0 and int_out_oe and int_readRDR_sync);
+
+    -- Syncronize the read signal from the other clock domain TODO: Remove this sync if possible and clk RDRF with i_clk
+    sync_readRDR: entity basic_rtl.pulse_synchronizer
+    port map(
+        i_raw => i_readRDR,
+        i_clkIn => i_clk,
+        i_clkOut => i_baudClkx8,
+        i_resetn => i_resetn,
+        o_pulse => int_readRDR_sync
+    );
 
     -- Recieve Buffers
     RDR: entity basic_rtl.registerNbits
@@ -95,7 +110,7 @@ begin
     port map(
         i_in => int_RSR_out,
         i_load => int_loadRDR,
-        i_clk => i_baudClkx8, --TODO: Replace wiht i_clk?
+        i_clk => i_clk,
         i_cen => const_vcc,
         i_resetn => i_resetn,
         o_out => int_out_RDR
@@ -118,7 +133,7 @@ begin
     RDRF_BUF: entity basic_rtl.synth_enardFF
     port map(
         i_d => int_in_rdrf,
-        i_cen => const_vcc,
+        i_cen => int_rdrfLd,
         i_clk => i_baudClkx8,
         i_resetn => i_resetn,
         o_q => int_out_rdrf,
