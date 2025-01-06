@@ -1,6 +1,6 @@
 project:
   name: uart_device
-  top_level: uart_transmitter  # defualt: and_gate
+  top_level: uart_device # uart_device # uart_baudRateGenerator # uart_transmitter # uart_receiver  # defualt: and_gate
   build_dir: build
   sim_tool: xsim
   synth_tool: vivado
@@ -16,14 +16,14 @@ device_settings_intel: # Quartus
   cable: 'USB-Blaster[USB-0]'
   board_device_index: '1'
 
-# device_settings: Vivado
-#   part: 'xc7z007sclg400-1'
-#   board_part: ''
-#   synth: vivado
-#   pgm: '' # none/vivado -- Programming tool
-#   jtag_freq: 0
-#   hw_target: ''
-#   board_device_index: 1
+device_settings_amd: # Vivado
+  part: 'xc7z007sclg400-1'
+  # board_part: ''
+  synth: vivado
+  # pgm: '' # none/vivado -- Programming tool
+  # jtag_freq: 0
+  # hw_target: ''
+  board_device_index: 1
 
 tool_options:
 # Custom extra tool options
