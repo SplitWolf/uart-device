@@ -23,8 +23,8 @@ architecture rtl of uart_transmitter is
     signal int_in_state0, int_in_state1, int_in_state2, int_in_state3: std_logic;
     signal int_out_state0, int_out_state1, int_out_state2, int_out_state3: std_logic;
     signal int_in_txdBUF, int_out_txdBUF: std_logic;
-    signal int_in_tdrf, int_out_tdrf: std_logic;
-    signal loadTDR_sync, int_out_tsr: std_logic;
+    signal int_in_tdre, int_out_tdre, int_tdreLd: std_logic;
+    signal int_loadTDR_sync, int_out_tsr: std_logic;
     -- Control Singals
     signal int_bitCountZero, int_enableCounter, int_loadCounter: std_logic;
     signal int_loadTSR, int_shiftTSR, int_cenTSR: std_logic; 
@@ -35,7 +35,7 @@ begin
     const_gnd <= '0';
 
     -- Output drivers
-    o_tdre <= not int_out_tdrf;
+    o_tdre <= int_out_tdre;
     o_txd <= int_out_txdBUF;
 
     -- Control Logic
@@ -45,24 +45,23 @@ begin
     int_enableCounter <= int_out_state3 or int_loadCounter;
     int_loadCounter <= int_out_state2;
     int_in_txdBUF <= int_out_state0 or int_out_state1 or (int_out_state3 and int_out_tsr); 
-    int_in_tdrf <= ((loadTDR_sync or int_out_tdrf) and int_out_state0)
-                or ((loadTDR_sync or int_out_tdrf) and int_out_state2)
-                or ((loadTDR_sync or int_out_tdrf) and int_out_state3);
+    int_in_tdre <= int_out_state1;
+    int_tdreLd <= ((int_out_state0 or int_out_state2 or int_out_state3) and int_loadTDR_sync) or int_out_state1;
 
     -- Next state logic
-    int_in_state0 <= (int_out_state0 and not int_out_tdrf) or (int_out_state3 and int_bitCountZero);
-    int_in_state1 <= (int_out_state0 and int_out_tdrf);
+    int_in_state0 <= (int_out_state0 and int_out_tdre) or (int_out_state3 and int_bitCountZero);
+    int_in_state1 <= (int_out_state0 and not int_out_tdre);
     int_in_state2 <= int_out_state1;
     int_in_state3 <= int_out_state2 or (int_out_state3 and not int_bitCountZero);
 
-    -- Syncronize the load signal from the other clock domain
+    -- Syncronize the load signal from the other clock domain TODO: Remove this sync if possible and clk TDRE with i_clk
     sync_loadTDR: entity basic_rtl.pulse_synchronizer
     port map(
         i_raw => i_loadTDR,
         i_clkIn => i_clk,
         i_clkOut => i_baudClk,
         i_resetn => i_resetn,
-        o_pulse => loadTDR_sync
+        o_pulse => int_loadTDR_sync
     );
 
     -- Bit counter
@@ -118,13 +117,13 @@ begin
         o_q => int_out_txdBUF,
         o_qn => open
     );
-    TDRF_BUF: entity basic_rtl.synth_enardFF
+    TDRE_BUF: entity basic_rtl.synth_enasdFF
     port map(
-        i_d => int_in_tdrf,
-        i_cen => const_vcc,
+        i_d => int_in_tdre,
+        i_cen => int_tdreLd,
         i_clk => i_baudClk,
-        i_resetn => i_resetn,
-        o_q => int_out_tdrf,
+        i_setn => i_resetn,
+        o_q => int_out_tdre,
         o_qn => open
     );
 
