@@ -22,29 +22,64 @@ architecture rtl of uart_device is
     -- Constant Signals;
     signal const_vcc, const_gnd: std_logic; 
     -- Data Signals
-    signal int_readRDR: std_logic;
-    signal int_SCSR: std_logic_vector(7 downto 0);
-    signal int_loadTDR, int_loadTDR_flop: std_logic;
-    signal int_out_tdre, int_out_txd: std_logic;
+    -- Baud Rate
+    signal int_baudClk: std_logic;
+    signal int_baudClkx8: std_logic;
+    -- Receive
+    signal int_readRDR, int_readRDR_flop, int_readRDR_pulse: std_logic;
+    signal int_out_rdr: std_logic_vector(7 downto 0);
     signal int_out_rdrf, int_out_oe, int_out_fe: std_logic;
-    signal int_out_sccr, int_out_rdr: std_logic_vector(7 downto 0);
+    -- Transmit
+    signal int_loadTDR, int_loadTDR_flop, int_loadTDR_pulse: std_logic;
+    signal int_out_tdre, int_out_txd: std_logic;
+    -- Common
+    signal int_SCSR, int_out_sccr: std_logic_vector(7 downto 0);
+
     -- Control Signals
+    -- Baud Rate
+    signal int_rateSel: std_logic_vector(2 downto 0);
+    -- UART Device
     signal address0, address1, address2, address3: std_logic;
     signal loadSCCR: std_logic;
 begin
+    -- TODO: Generate Shorter Interupt Pulses Maybe? Check case where RDRF IRQ goes high right after TRANSMITTER IRQ IS SERVICED or Vise-versa 
     const_vcc <= '1';
     const_gnd <= '0';
     -- Ouput Drivers
     o_txd <= int_out_txd;
-    o_irq <= '0'; --TODO: GENERATE IRQ
-    -- TODO: Baud Rate Generator
+    -- Generate IRQ
+    o_irq <= (int_out_sccr(7) and int_out_tdre) or (int_out_sccr(6) and (int_out_rdrf or int_out_oe));
+
+    -- Baud Rate Generator
+    int_rateSel <= int_out_sccr(2 downto 0);
+    baudRateGen: entity work.uart_baudRateGenerator
+     port map(
+        i_rateSel => int_rateSel,
+        i_clk => i_clk,
+        i_resetn => i_resetn,
+        o_baudClk => int_baudClk,
+        o_baudClkx8 => int_baudClkx8
+    );
 
     -- Receiver
+    int_readRDR <= address0 and i_writen_read and i_uartSelect;
+    readRDR_ff: entity basic_rtl.synth_enardFF
+    port map(
+        i_d => int_readRDR,
+        i_cen => const_vcc,
+        i_clk => i_clk,
+        i_resetn => i_resetn,
+        o_q => int_readRDR_flop,
+        o_qn => open
+    );
+
+    int_readRDR_pulse <= int_readRDR and not int_readRDR_flop;
     receive: entity work.uart_receiver
      port map(
         i_rxd => i_rxd,
-        i_baudClkx8 => '0',
-        i_readRDR => int_readRDR,
+        i_clk => i_clk,
+        i_baudClkx8 => int_baudClkx8,
+        i_readRDR => int_readRDR_pulse,
         i_resetn => i_resetn,
         o_oe => int_out_oe,
         o_fe => int_out_fe,
@@ -66,12 +101,14 @@ begin
         o_qn => open
     );
 
+    int_loadTDR_pulse <= int_loadTDR and not int_loadTDR_flop;
+
     transmit: entity work.uart_transmitter
         port map (
             i_data => io_data_bus,
-            i_loadTDR => int_loadTDR_flop,
+            i_loadTDR => int_loadTDR_pulse,
             i_clk => i_clk,
-            i_baudClk => '0', --TODO: SET BAUD CLK
+            i_baudClk => int_baudClk,
             i_resetn => i_resetn,
             o_tdre => int_out_tdre,
             o_txd => int_out_txd
