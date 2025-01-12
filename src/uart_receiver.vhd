@@ -24,8 +24,8 @@ architecture rtl of uart_receiver is
     signal const_vcc, const_gnd: std_logic;
     
     -- Data Signals
-    signal int_in_state0, int_in_state1, int_in_state2, int_in_state3, int_in_state4, int_in_state5, int_in_state6: std_logic;
-    signal int_out_state0, int_out_state1, int_out_state2, int_out_state3, int_out_state4, int_out_state5, int_out_state6: std_logic;
+    signal int_in_state0, int_in_state1, int_in_state2, int_in_state3, int_in_state4, int_in_state5: std_logic;
+    signal int_out_state0, int_out_state1, int_out_state2, int_out_state3, int_out_state4, int_out_state5: std_logic;
     signal int_out_RDR, int_RSR_out: std_logic_vector(7 downto 0); 
     signal int_loadRDR, int_readRDR_sync, int_cenRSR: std_logic;
     signal int_rdrfLd, int_in_rdrf, int_out_rdrf: std_logic;
@@ -269,15 +269,6 @@ begin
         i_clk => i_baudClkx8,
         i_resetn => i_resetn,
         o_q => int_out_state5,
-        o_qn => open
-    );
-    state6: entity basic_rtl.synth_enardFF
-    port map(
-        i_d => int_in_state6,
-        i_cen => const_vcc,
-        i_clk => i_baudClkx8,
-        i_resetn => i_resetn,
-        o_q => int_out_state6,
         o_qn => open
     );
 
