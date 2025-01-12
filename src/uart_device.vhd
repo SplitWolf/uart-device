@@ -89,7 +89,7 @@ begin
     
     -- Transmitter
 
-    int_loadTDR <= (address0 and (not i_writen_read));
+    int_loadTDR <= (address0 and (not i_writen_read) and i_uartSelect);
 
     loadTDR_ff: entity basic_rtl.synth_enardFF
     port map(
@@ -124,7 +124,7 @@ begin
     o_out3 => address3
     );
     int_SCSR <= int_out_tdre & int_out_rdrf & "0000" & int_out_oe & int_out_fe;
-    loadSCCR <= (address2 or address3) and not i_writen_read;
+    loadSCCR <= ((address2 or address3) and not i_writen_read and i_uartSelect);
 
     io_data_bus <= (others => 'Z');
     io_data_bus <= int_out_rdr when (address0 and i_writen_read and i_uartSelect) = '1' else (others => 'Z');
